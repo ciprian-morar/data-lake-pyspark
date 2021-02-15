@@ -45,11 +45,21 @@ def process_song_data(spark, input_data, output_data):
         .parquet(os.path.join(output_data, 'songs'))
 
     # extract columns to create artists table
-    artists_table = df['artist_id',
+    artists_df = df['artist_id',
                        'artist_name',
                        'artist_location',
                        'artist_latitude',
                        'artist_longitude']
+
+    artists_df.createOrReplaceTempView("artists_table")
+    artists_table = spark.sql("""
+        SELECT DISTINCT artist_id, 
+        artist_name, 
+        artist_location, 
+        artist_latitude, 
+        artist_longitude
+        FROM artists_table
+    """)
 
     # write artists table to parquet files
     artists_table.write\
@@ -68,11 +78,21 @@ def process_log_data(spark, input_data, output_data):
     df_filtered = df.filter(df.page == "NextSong")
 
     # extract columns for users table
-    users_table = df_filtered['userId',
+    users_df = df_filtered['userId',
                               'firstName',
                               'lastName',
                               'gender',
                               'level']
+
+    users_df.createOrReplaceTempView("users_table")
+    users_table = spark.sql("""
+        SELECT DISTINCT userId, 
+        firstName, 
+        lastName, 
+        gender, 
+        level
+        FROM users_table
+    """)
 
     # write users table to parquet files
     users_table.write.mode('overwrite').parquet(os.path.join(output_data, 'users'))
